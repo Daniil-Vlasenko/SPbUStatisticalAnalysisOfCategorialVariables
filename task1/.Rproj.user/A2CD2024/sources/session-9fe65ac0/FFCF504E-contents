@@ -5,6 +5,18 @@ date: "2023-02-25"
 ---
 
 ```{r}
+library(readxl)
+library(dplyr)
+library(reshape2)
+```
 
+```{r}
+data <- read_excel("addicts1.xlsx", sheet = 2)
+data <- data %>% select(prcod, intpla, curwor, educat, sex, end) %>% mutate(id = row_number())
+data
+```
+```{r}
+table(data$id[row(data[-1])], unlist(data[-1]))
+# table(unlist(data[-1]))
 ```
 
