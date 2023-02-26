@@ -1,0 +1,2 @@
+"0","df <- data"
+"0","list.to.binary(as.numeric(unlist(df[, 1])), names[1])"

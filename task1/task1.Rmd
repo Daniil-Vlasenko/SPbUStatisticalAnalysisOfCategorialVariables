@@ -23,7 +23,6 @@ data
 
 ```{r}
 list.to.binary <- function(column, name) {
-  column <- 
   value <- sort(unique(column))
   names <- c()
   for (i in value) {
@@ -42,25 +41,19 @@ list.to.binary <- function(column, name) {
 
 df.to.binary <- function(df) {
   names <- colnames(df)
-  df.data <- list.to.binary(df[, 1], names[1])
+  df.data <- list.to.binary(as.numeric(unlist(df[, 1])), names[1])
   for (i in 2:length(names)) {
-    df.data <- cbind(df.data, list.to.binary(df[, i], names[i]))
+    df.data <- cbind(df.data, list.to.binary(as.numeric(unlist(df[, i])), names[i]))
   }
+  df.data
 }
 
-df <- data
-names <- colnames(df)
-df.data <- list.to.binary(as.numeric(unlist(df[, 1])), names[1])
-for (i in 2:length(names)) {
-  df.data <- cbind(df.data, list.to.binary(as.numeric(unlist(df[, i])), names[i]))
-}
-df.data
+df.to.binary(data)
 ```
 
-
-
 ```{r}
-str(data)
-princomp(data)
+df <- data
+list.to.binary(as.numeric(unlist(df[, 1])), names[1])
+list.to.binary(data$prcod, "prcod")
 ```
 
