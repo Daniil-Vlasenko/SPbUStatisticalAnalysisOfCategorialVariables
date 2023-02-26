@@ -1,3 +1,0 @@
-"0","data <- read_excel(""addicts1.xlsx"", sheet = 2)"
-"0","data <- data %>% select(prcod, intpla, curwor, educat, sex, end) %>% mutate(id = row_number())"
-"0","data"

@@ -5,18 +5,62 @@ date: "2023-02-25"
 ---
 
 ```{r}
+install.packages("tidyr")
+```
+
+```{r}
 library(readxl)
 library(dplyr)
+library(tidyr)
 library(reshape2)
 ```
 
 ```{r}
 data <- read_excel("addicts1.xlsx", sheet = 2)
-data <- data %>% select(prcod, intpla, curwor, educat, sex, end) %>% mutate(id = row_number())
+data <- data %>% select(prcod, intpla, curwor, educat, sex, end) %>% na.omit()
 data
 ```
+
 ```{r}
-table(data$id[row(data[-1])], unlist(data[-1]))
-# table(unlist(data[-1]))
+list.to.binary <- function(column, name) {
+  column <- 
+  value <- sort(unique(column))
+  names <- c()
+  for (i in value) {
+    names <- c(names, paste(name, i, sep="_"))
+  }
+  
+  matrix.data <- matrix(0, ncol = length(value), nrow = length(column))
+  for (i in 1:length(column)) {
+    matrix.data[i, column[i]] <- 1
+  }
+  
+  df.data <- as.data.frame(matrix.data)
+  colnames(df.data) <- names
+  df.data
+}
+
+df.to.binary <- function(df) {
+  names <- colnames(df)
+  df.data <- list.to.binary(df[, 1], names[1])
+  for (i in 2:length(names)) {
+    df.data <- cbind(df.data, list.to.binary(df[, i], names[i]))
+  }
+}
+
+df <- data
+names <- colnames(df)
+df.data <- list.to.binary(as.numeric(unlist(df[, 1])), names[1])
+for (i in 2:length(names)) {
+  df.data <- cbind(df.data, list.to.binary(as.numeric(unlist(df[, i])), names[i]))
+}
+df.data
+```
+
+
+
+```{r}
+str(data)
+princomp(data)
 ```
 
