@@ -5,7 +5,7 @@ date: "2023-02-25"
 ---
 
 ```{r}
-install.packages("tidyr")
+install.packages("pracma")
 ```
 
 ```{r}
@@ -13,6 +13,8 @@ library(readxl)
 library(dplyr)
 library(tidyr)
 library(reshape2)
+library(ggplot2)
+library(pracma)
 ```
 
 Читаем данные:
@@ -64,8 +66,31 @@ pc$loadings[,1:4]
 pc$scores[1:10, 1:4]
 ```
 
+Изобразим первые две компоненты:
+```{r}
+ggplot(as.data.frame(pc$scores), aes(x=Comp.1, y=Comp.2)) + geom_point()
+```
+
+
 ## Многомерное шкалирование.
 ```{r}
+mean.col <- function(df) {
+  new.df <- df
+  for (i in 1:ncol(df)) {
+    new.df[, i] <- new.df[, i] - mean(df[, i])
+  }
+  return(new.df)
+}
+
+multidom.scaling <- function(df, m) {
+  n <- nrow(df)
+  X <- matrix(runif(n=n*m, min=1, max=20), nrow=n)
+  X <- mean.col(X)
+  X <- gramSchmidt(X)$Q
+  X
+}
+
+
 
 ```
 
