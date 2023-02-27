@@ -18,11 +18,12 @@ library(reshape2)
 ```{r}
 data <- read_excel("addicts1.xlsx", sheet = 2)
 data <- data %>% select(prcod, intpla, curwor, educat, sex, end) %>% na.omit()
-data
+head(data)
 ```
 
 ```{r}
-list.to.binary <- function(column, name) {
+# Построение по вектору численных значений матрицы инцидетности.
+numeric.to.binary <- function(column, name) {
   value <- sort(unique(column))
   names <- c()
   for (i in value) {
@@ -39,21 +40,48 @@ list.to.binary <- function(column, name) {
   df.data
 }
 
+# Построение матрицы инцидентности.
 df.to.binary <- function(df) {
   names <- colnames(df)
-  df.data <- list.to.binary(as.numeric(unlist(df[, 1])), names[1])
+  df.data <- numeric.to.binary(as.numeric(unlist(df[, 1])), names[1])
   for (i in 2:length(names)) {
-    df.data <- cbind(df.data, list.to.binary(as.numeric(unlist(df[, i])), names[i]))
+    df.data <- cbind(df.data, numeric.to.binary(as.numeric(unlist(df[, i])), names[i]))
   }
   df.data
 }
 
-df.to.binary(data)
+data.new <- df.to.binary(data)
+head(data.new)
 ```
 
 ```{r}
-df <- data
-list.to.binary(as.numeric(unlist(df[, 1])), names[1])
-list.to.binary(data$prcod, "prcod")
+pc<-princomp(data.new)
 ```
+
+Сдандартное отклонение главных коммпонент:
+```{r}
+pc$sdev
+```
+
+Факторные нагрузки:
+```{r}
+pc$loadings[,1:4]
+```
+
+Из интересного можно заметить, что Comp2 коррелирует положительно с prcod_2 и 
+отрицательно с end_0.
+
+Значения главных компонент:
+```{r}
+pc$scores[1:10, 1:4]
+```
+
+
+
+
+
+
+
+
+
 

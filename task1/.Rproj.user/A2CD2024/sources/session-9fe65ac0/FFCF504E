@@ -3,7 +3,7 @@
     "path": "~/programming/R/SPbUStatisticalAnalysisOfCategorialVariables/task1/task1.Rmd",
     "project_path": "task1.Rmd",
     "type": "r_markdown",
-    "hash": "3544468922",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1677303111876.0,
@@ -13,15 +13,15 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "50,17",
-        "scrollLine": "34"
+        "cursorPosition": "38,28",
+        "scrollLine": "25"
     },
     "folds": "",
-    "lastKnownWriteTime": 1677439647,
+    "lastKnownWriteTime": 1677476680,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1677439647059,
+    "last_content_update": 1677476680661,
     "read_only": false,
     "read_only_alternatives": []
 }
