@@ -30,6 +30,9 @@ numeric.to.binary <- function(column, name) {
     names <- c(names, paste(name, i, sep="_"))
   }
   
+  if (0 %in% value)
+    column <- column + 1
+  
   matrix.data <- matrix(0, ncol = length(value), nrow = length(column))
   for (i in 1:length(column)) {
     matrix.data[i, column[i]] <- 1
@@ -68,8 +71,7 @@ pc$sdev
 pc$loadings[,1:4]
 ```
 
-Из интересного можно заметить, что Comp2 коррелирует положительно с prcod_2 и 
-отрицательно с end_0.
+
 
 Значения главных компонент:
 ```{r}
