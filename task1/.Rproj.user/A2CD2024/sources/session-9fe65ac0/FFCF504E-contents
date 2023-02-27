@@ -47,8 +47,8 @@ head(df.inc)
 ## Факторный анализ.
 Добавим алкогольную зависимость и вычислим главные компоненты:
 ```{r}
-df.inc.al <- cbind(df.inc, df$asi3_alc, df$asi4_dr)
-pc<-princomp(df.inc.al)
+df.inc.al.dr <- cbind(df.inc, df$asi3_alc, df$asi4_dr)
+pc<-princomp(df.inc.al.dr)
 ```
 
 Сдандартное отклонение главных коммпонент:
@@ -82,14 +82,53 @@ mean.col <- function(df) {
   return(new.df)
 }
 
-multidom.scaling <- function(df, m) {
+loss.function <- function(X, G, Y) {
+  m <- length(Y)
+  value <- 0
+  for (i in 1:m) {
+    value <- value + tr(t(X - G[[i]] %*% Y[[i]]) %*% (X - G[[i]] %*% Y[[i]]))
+  }
+  return(value)
+}
+
+incidence_matrices <- function(df) {
+  G <- list()
+  for(i in 1:ncol(df)) {
+    G[[i]] <- as.matrix(incidence_matrix(df[,i]))
+  }
+  return(G)
+}
+
+multidim.scaling <- function(df, m) {
   n <- nrow(df)
+  G <- incidence_matrices(df)
+  
   X <- matrix(runif(n=n*m, min=1, max=20), nrow=n)
   X <- mean.col(X)
   X <- gramSchmidt(X)$Q
-  X
+  Y <- list()
+  for(i in 1:m) {
+    Y[[i]] <- inv(t(G[[i]]) %*% G[[i]]) %*% t(G[[i]]) %*% X
+  }
+  
+  for(j in 1:100) {
+    X <- 0
+    for(i in 1:m) {
+      X <- X + G[[i]] %*% Y[[i]]
+    }
+    X <- mean.col(X)
+    X <- gramSchmidt(X)$Q
+    Y <- list()
+    for(i in 1:m) {
+      Y[[i]] <- inv(t(G[[i]]) %*% G[[i]]) %*% t(G[[i]]) %*% X
+    }
+  }
+  
+  return(X)
 }
 
+
+ms <- multidim.scaling(df.new, 4)
 
 
 ```
@@ -99,7 +138,7 @@ multidom.scaling <- function(df, m) {
 
 ```{r}
 
-incidence_matrix(data)
+ggplot(as.data.frame(ms), aes(x=V1, y=V2)) + geom_point()
 ```
 
 
