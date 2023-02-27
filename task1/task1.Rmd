@@ -15,12 +15,14 @@ library(tidyr)
 library(reshape2)
 ```
 
+Читаем данные:
 ```{r}
 data <- read_excel("addicts1.xlsx", sheet = 2)
 data <- data %>% select(prcod, intpla, curwor, educat, sex, end) %>% na.omit()
 head(data)
 ```
 
+Строим матрицу инцидентности:
 ```{r}
 # Построение по вектору численных значений матрицы инцидетности.
 numeric.to.binary <- function(column, name) {
@@ -57,6 +59,9 @@ data.new <- df.to.binary(data)
 head(data.new)
 ```
 
+
+## Факторный анализ.
+Считаем главные компоненты:
 ```{r}
 pc<-princomp(data.new)
 ```
@@ -71,13 +76,12 @@ pc$sdev
 pc$loadings[,1:4]
 ```
 
-
-
 Значения главных компонент:
 ```{r}
 pc$scores[1:10, 1:4]
 ```
 
+## Многомерное шкалирование.
 
 
 

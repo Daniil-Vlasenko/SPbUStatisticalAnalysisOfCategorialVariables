@@ -1,0 +1,3 @@
+"0","df <- read_excel(""addicts1.xlsx"", sheet = 2) %>% na.omit()"
+"0","df.new <- df %>% select(prcod, intpla, educat, end) "
+"0","head(df.new)"

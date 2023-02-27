@@ -15,50 +15,38 @@ library(tidyr)
 library(reshape2)
 ```
 
+Читаем данные:
 ```{r}
-data <- read_excel("addicts1.xlsx", sheet = 2)
-data <- data %>% select(prcod, intpla, curwor, educat, sex, end) %>% na.omit()
-head(data)
+df <- read_excel("addicts1.xlsx", sheet = 2) %>% na.omit()
+df.new <- df %>% select(prcod, intpla, educat, end) 
+head(df.new)
 ```
 
+Строим матрицу инцидентности:
 ```{r}
-# Построение по вектору численных значений матрицы инцидетности.
-numeric.to.binary <- function(column, name) {
-  value <- sort(unique(column))
-  names <- c()
-  for (i in value) {
-    names <- c(names, paste(name, i, sep="_"))
-  }
+incidence_matrix<-function(df){
+  x <- data.frame(nrow=nrow(df))
+  for(j in 1:ncol(df))
+    for(k in min(df[, j]):max(df[, j])){
+      s <- paste(colnames(df)[j], as.character(k), sep='_')
+      x[1:nrow(df), s] <- 0
+      x[which(df[, j] == k), s] <- 1
+    }
   
-  if (0 %in% value)
-    column <- column + 1
-  
-  matrix.data <- matrix(0, ncol = length(value), nrow = length(column))
-  for (i in 1:length(column)) {
-    matrix.data[i, column[i]] <- 1
-  }
-  
-  df.data <- as.data.frame(matrix.data)
-  colnames(df.data) <- names
-  df.data
+  x$nrow <- NULL
+  return(x)
 }
 
-# Построение матрицы инцидентности.
-df.to.binary <- function(df) {
-  names <- colnames(df)
-  df.data <- numeric.to.binary(as.numeric(unlist(df[, 1])), names[1])
-  for (i in 2:length(names)) {
-    df.data <- cbind(df.data, numeric.to.binary(as.numeric(unlist(df[, i])), names[i]))
-  }
-  df.data
-}
-
-data.new <- df.to.binary(data)
-head(data.new)
+df.inc <- incidence_matrix(df.new)
+head(df.inc)
 ```
 
+
+## Факторный анализ.
+Добавим алкогольную зависимость и вычислим главные компоненты:
 ```{r}
-pc<-princomp(data.new)
+df.inc.al <- cbind(df.inc, df$asi3_alc, df$asi4_dr)
+pc<-princomp(df.inc.al)
 ```
 
 Сдандартное отклонение главных коммпонент:
@@ -71,16 +59,23 @@ pc$sdev
 pc$loadings[,1:4]
 ```
 
-
-
 Значения главных компонент:
 ```{r}
 pc$scores[1:10, 1:4]
 ```
 
+## Многомерное шкалирование.
+```{r}
+
+```
 
 
 
+
+```{r}
+
+incidence_matrix(data)
+```
 
 
 

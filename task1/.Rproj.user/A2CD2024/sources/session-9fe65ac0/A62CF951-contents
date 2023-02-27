@@ -1,0 +1,47 @@
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+library(dplyr)
+
+incidence_matrix<-function(df){
+    x<-data.frame(nrow=nrow(df))
+    for(j in 1:ncol(df))
+      for(k in min(df[,j]):max(df[,j])){
+        s<-paste(colnames(df)[j],as.character(k),sep=' ')
+        x[1:nrow(df),s]<-0
+        x[which(df[,j]==k),s]<-1
+      }
+    
+    x$nrow<-NULL
+    return(x)
+}
+
+#m<-incidence_matrix(df$craving.to.alcohol.1)
+
+df<-read.csv('data_big.csv')
+X1<-df$HR.1
+X2<-df$SBP.1
+X3<-df$MBP.1
+X4<-df$CO.1
+X5<-df$SI.1
+X6<-df$CI.1
+X7<-df$TPR.1
+
+x<-data.frame(df[,'craving.to.alcohol.1'])
+x<-incidence_matrix(x)
+X<-cbind(x,X1,X2,X3,X4,X5,X6,X7)
+X<-X[-31,]
+df<-df[-31,]
+pc<-princomp(X)
+pc$sdev/sum(pc$sdev)
+pc$loadings
+
+plot(pc$scores[,1],pc$scores[,2],type='n')
+text(pc$scores[,1],pc$scores[,2],rownames(X),cex=1,col=1+df[,'craving.to.alcohol.1'])
+kruskal.test(pc$scores[,2]~df$craving.to.alcohol.1)
+boxplot(pc$scores[,2]~df$craving.to.alcohol.1)
+
+plot(pc$scores[,2],pc$scores[,3],type='n')
+text(pc$scores[,2],pc$scores[,3],rownames(X),cex=1,col=1+df[,'craving.to.alcohol.1'])
+
+plot(pc$scores[,1],pc$scores[,3],type='n')
+text(pc$scores[,1],pc$scores[,3],rownames(X),cex=1,col=1+df[,'craving.to.alcohol.1'])

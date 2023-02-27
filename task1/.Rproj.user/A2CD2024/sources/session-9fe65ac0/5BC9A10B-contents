@@ -1,0 +1,43 @@
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+library(dplyr)
+
+incidence_matrix<-function(df){
+  x<-data.frame(nrow=nrow(df))
+  for(j in 1:ncol(df))
+    for(k in min(df[,j]):max(df[,j])){
+      s<-paste(colnames(df)[j],as.character(k),sep=' ')
+      x[1:nrow(df),s]<-0
+      x[which(df[,j]==k),s]<-1
+    }
+  
+  x$nrow<-NULL
+  return(x)
+}
+
+#m<-incidence_matrix(df$craving.to.alcohol.1)
+
+df<-read.csv('data_big.csv')
+library(tree)
+df1<-df[,c('suspiciousness.1','irritability.1','headache.1','polyuria.1','sweating.1')]
+
+
+
+X1<-df$suspiciousness.1
+X2<-df$irritability.1
+X3<-df$headache.1
+X4<-df$polyuria.1
+X5<-df$sweating.1
+X<-cbind(X1,X2,X3,X4,X5)
+x<-incidence_matrix(X)
+x<-as.data.frame(x)
+tr<-tree(headache.1~.,data=df1)
+plot(tr)
+text(tr)
+tr
+data(cpus, package="MASS")
+cpus.ltr <- tree(class ~ syct+mmin+mmax+cach+chmin+chmax, cpus)
+plot(cpus.ltr)
+text(cpus.ltr,col=3)
+cpus.ltr
+x<-incidence_matrix(X)
