@@ -1,0 +1,1 @@
+"0","ggplot(cbind(as.data.frame(pc$scores), prcod = as.factor(df$prcod)), aes(x=Comp.1, y=Comp.2, color=prcod)) + geom_point()"

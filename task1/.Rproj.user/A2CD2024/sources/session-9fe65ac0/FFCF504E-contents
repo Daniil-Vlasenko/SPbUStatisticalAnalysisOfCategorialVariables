@@ -4,7 +4,7 @@ output: html_document
 date: "2023-02-25"
 ---
 
-```{r}
+```{r, include=FALSE}
 install.packages("pracma")
 ```
 
@@ -12,7 +12,6 @@ install.packages("pracma")
 library(readxl)
 library(dplyr)
 library(tidyr)
-library(reshape2)
 library(ggplot2)
 library(pracma)
 ```
@@ -24,6 +23,7 @@ df.new <- df %>% select(prcod, intpla, educat, end)
 head(df.new)
 ```
 
+## Факторный анализ.
 Строим матрицу инцидентности:
 ```{r}
 incidence_matrix<-function(df){
@@ -40,15 +40,13 @@ incidence_matrix<-function(df){
 }
 
 df.inc <- incidence_matrix(df.new)
+df.inc <- df.inc %>% select(-prcod_4, -intpla_2, -educat_4, -end_1)
 head(df.inc)
 ```
 
-
-## Факторный анализ.
-Добавим алкогольную зависимость и вычислим главные компоненты:
+Добавим алкогольную наркотическую зависимость и вычислим главные компоненты:
 ```{r}
-df.inc.al.dr <- cbind(df.inc, df$asi3_alc, df$asi4_dr)
-pc<-princomp(df.inc.al.dr)
+pc<-princomp(df.inc)
 ```
 
 Сдандартное отклонение главных коммпонент:
@@ -68,7 +66,7 @@ pc$scores[1:10, 1:4]
 
 Изобразим первые две компоненты:
 ```{r}
-ggplot(as.data.frame(pc$scores), aes(x=Comp.1, y=Comp.2)) + geom_point()
+ggplot(cbind(as.data.frame(pc$scores), prcod = as.factor(df$prcod)), aes(x=Comp.1, y=Comp.2, color=prcod)) + geom_point()
 ```
 
 
@@ -86,7 +84,7 @@ loss.function <- function(X, G, Y) {
   m <- length(Y)
   value <- 0
   for (i in 1:m) {
-    value <- value + tr(t(X - G[[i]] %*% Y[[i]]) %*% (X - G[[i]] %*% Y[[i]]))
+    value <- value + sum(diag(t(X - G[[i]] %*% Y[[i]]) %*% (X - G[[i]] %*% Y[[i]])))
   }
   return(value)
 }
@@ -103,7 +101,7 @@ multidim.scaling <- function(df, m) {
   n <- nrow(df)
   G <- incidence_matrices(df)
   
-  X <- matrix(runif(n=n*m, min=1, max=20), nrow=n)
+  X <- matrix(runif(n=n*m, min=0, max=1), nrow=n)
   X <- mean.col(X)
   X <- gramSchmidt(X)$Q
   Y <- list()
@@ -111,8 +109,9 @@ multidim.scaling <- function(df, m) {
     Y[[i]] <- inv(t(G[[i]]) %*% G[[i]]) %*% t(G[[i]]) %*% X
   }
   
-  for(j in 1:100) {
-    X <- 0
+  loss.1 <- loss.function(X, G, Y)
+  repeat {
+    X <- X * 0
     for(i in 1:m) {
       X <- X + G[[i]] %*% Y[[i]]
     }
@@ -122,23 +121,38 @@ multidim.scaling <- function(df, m) {
     for(i in 1:m) {
       Y[[i]] <- inv(t(G[[i]]) %*% G[[i]]) %*% t(G[[i]]) %*% X
     }
+    
+    if(abs(loss.function(X, G, Y) - loss.1) < 0.000001) {
+      break
+    }
+    loss.1 = loss.function(X, G, Y)
   }
-  
   return(X)
 }
 
-
-ms <- multidim.scaling(df.new, 4)
-
-
+ms <- as.data.frame(multidim.scaling(df.new, 4))
+ms$index <- 1:nrow(ms)
+ms$prcod <- as.factor(df$prcod)
 ```
 
 
-
-
 ```{r}
+V1 = c()
+V2 = c()
+for (i in 1:ncol(df.inc)) {
+  V1 = c(V1, cor(ms$V1, df.inc[,i]))
+  V2 = c(V2, cor(ms$V2, df.inc[,i]))
+}
+cor.df <- data.frame(names=colnames(df.inc),
+                     V1 = V1,
+                     V2 = V2)
+cor.df
+```
 
-ggplot(as.data.frame(ms), aes(x=V1, y=V2)) + geom_point()
+Изобразим первые два признака на плоскости:
+```{r}
+ggplot(as.data.frame(ms), aes(x=V1, y=V2, color=prcod)) + 
+  geom_point()
 ```
 
 

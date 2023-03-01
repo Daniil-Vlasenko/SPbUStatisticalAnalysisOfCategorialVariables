@@ -4,66 +4,49 @@ output: html_document
 date: "2023-02-25"
 ---
 
-```{r}
-install.packages("tidyr")
+```{r, include=FALSE}
+install.packages("pracma")
 ```
 
 ```{r}
 library(readxl)
 library(dplyr)
 library(tidyr)
-library(reshape2)
+library(ggplot2)
+library(pracma)
 ```
 
 Читаем данные:
 ```{r}
-data <- read_excel("addicts1.xlsx", sheet = 2)
-data <- data %>% select(prcod, intpla, curwor, educat, sex, end) %>% na.omit()
-head(data)
+df <- read_excel("addicts1.xlsx", sheet = 2) %>% na.omit()
+df.new <- df %>% select(prcod, intpla, educat, end) 
+head(df.new)
 ```
-
-Строим матрицу инцидентности:
-```{r}
-# Построение по вектору численных значений матрицы инцидетности.
-numeric.to.binary <- function(column, name) {
-  value <- sort(unique(column))
-  names <- c()
-  for (i in value) {
-    names <- c(names, paste(name, i, sep="_"))
-  }
-  
-  if (0 %in% value)
-    column <- column + 1
-  
-  matrix.data <- matrix(0, ncol = length(value), nrow = length(column))
-  for (i in 1:length(column)) {
-    matrix.data[i, column[i]] <- 1
-  }
-  
-  df.data <- as.data.frame(matrix.data)
-  colnames(df.data) <- names
-  df.data
-}
-
-# Построение матрицы инцидентности.
-df.to.binary <- function(df) {
-  names <- colnames(df)
-  df.data <- numeric.to.binary(as.numeric(unlist(df[, 1])), names[1])
-  for (i in 2:length(names)) {
-    df.data <- cbind(df.data, numeric.to.binary(as.numeric(unlist(df[, i])), names[i]))
-  }
-  df.data
-}
-
-data.new <- df.to.binary(data)
-head(data.new)
-```
-
 
 ## Факторный анализ.
-Считаем главные компоненты:
+Строим матрицу инцидентности:
 ```{r}
-pc<-princomp(data.new)
+incidence_matrix<-function(df){
+  x <- data.frame(nrow=nrow(df))
+  for(j in 1:ncol(df))
+    for(k in min(df[, j]):max(df[, j])){
+      s <- paste(colnames(df)[j], as.character(k), sep='_')
+      x[1:nrow(df), s] <- 0
+      x[which(df[, j] == k), s] <- 1
+    }
+  
+  x$nrow <- NULL
+  return(x)
+}
+
+df.inc <- incidence_matrix(df.new)
+df.inc <- df.inc %>% select(-prcod_4, -intpla_2, -educat_4, -end_1)
+head(df.inc)
+```
+
+Добавим алкогольную наркотическую зависимость и вычислим главные компоненты:
+```{r}
+pc<-princomp(df.inc)
 ```
 
 Сдандартное отклонение главных коммпонент:
@@ -81,10 +64,96 @@ pc$loadings[,1:4]
 pc$scores[1:10, 1:4]
 ```
 
+Изобразим первые две компоненты:
+```{r}
+ggplot(cbind(as.data.frame(pc$scores), prcod = as.factor(df$prcod)), aes(x=Comp.1, y=Comp.2, color=prcod)) + geom_point()
+```
+
+
 ## Многомерное шкалирование.
+```{r}
+mean.col <- function(df) {
+  new.df <- df
+  for (i in 1:ncol(df)) {
+    new.df[, i] <- new.df[, i] - mean(df[, i])
+  }
+  return(new.df)
+}
+
+loss.function <- function(X, G, Y) {
+  m <- length(Y)
+  value <- 0
+  for (i in 1:m) {
+    value <- value + sum(diag(t(X - G[[i]] %*% Y[[i]]) %*% (X - G[[i]] %*% Y[[i]])))
+  }
+  return(value)
+}
+
+incidence_matrices <- function(df) {
+  G <- list()
+  for(i in 1:ncol(df)) {
+    G[[i]] <- as.matrix(incidence_matrix(df[,i]))
+  }
+  return(G)
+}
+
+multidim.scaling <- function(df, m) {
+  n <- nrow(df)
+  G <- incidence_matrices(df)
+  
+  X <- matrix(runif(n=n*m, min=0, max=1), nrow=n)
+  X <- mean.col(X)
+  X <- gramSchmidt(X)$Q
+  Y <- list()
+  for(i in 1:m) {
+    Y[[i]] <- inv(t(G[[i]]) %*% G[[i]]) %*% t(G[[i]]) %*% X
+  }
+  
+  loss.1 <- loss.function(X, G, Y)
+  repeat {
+    X <- X * 0
+    for(i in 1:m) {
+      X <- X + G[[i]] %*% Y[[i]]
+    }
+    X <- mean.col(X)
+    X <- gramSchmidt(X)$Q
+    Y <- list()
+    for(i in 1:m) {
+      Y[[i]] <- inv(t(G[[i]]) %*% G[[i]]) %*% t(G[[i]]) %*% X
+    }
+    
+    if(abs(loss.function(X, G, Y) - loss.1) < 0.000001) {
+      break
+    }
+    loss.1 = loss.function(X, G, Y)
+  }
+  return(X)
+}
+
+ms <- as.data.frame(multidim.scaling(df.new, 4))
+ms$index <- 1:nrow(ms)
+ms$prcod <- as.factor(df$prcod)
+```
 
 
+```{r}
+V1 = c()
+V2 = c()
+for (i in 1:ncol(df.inc)) {
+  V1 = c(V1, cor(ms$V1, df.inc[,i]))
+  V2 = c(V2, cor(ms$V2, df.inc[,i]))
+}
+cor.df <- data.frame(names=colnames(df.inc),
+                     V1 = V1,
+                     V2 = V2)
+cor.df
+```
 
+Изобразим первые два признака на плоскости:
+```{r}
+ggplot(as.data.frame(ms), aes(x=V1, y=V2, color=prcod)) + 
+  geom_point()
+```
 
 
 

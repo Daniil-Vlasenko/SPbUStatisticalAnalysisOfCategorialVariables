@@ -1,2 +1,0 @@
-"0","df.inc.al <- cbind(df.inc, df$asi3_alc, df$asi4_dr)"
-"0","pc<-princomp(df.inc.al)"

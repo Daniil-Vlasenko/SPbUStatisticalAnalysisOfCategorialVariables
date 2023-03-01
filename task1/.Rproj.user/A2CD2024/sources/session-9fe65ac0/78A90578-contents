@@ -1,0 +1,99 @@
+Uniform<-function(x,delta){
+  y<-x+runif(1,-delta,delta)
+  if(abs(y)<abs(x))
+    return(y)
+  alpha<-exp((x^2-y^2)/2)
+  z<-rbinom(1,1,alpha)
+  if(z)
+    return(y)
+  return(x)
+}
+
+count_alpha<-function(x,y){
+  # if(abs(y)<abs(x))
+  #   return(1)
+  if(identical(x,y))
+    return(1)
+  return(0)
+}
+
+mean_alpha<-function(X){
+  Alphas<-sapply(1:(length(X)-1),function(i)count_alpha(X[i],X[i+1]))
+  return(mean(Alphas))
+}
+Cauchy<-function(x,delta){
+  y<-x+rcauchy(1,scale=delta)
+  if(abs(y)<abs(x))
+    return(y)
+  alpha<-exp((x^2-y^2)/2)
+  z<-rbinom(1,1,alpha)
+  if(z)
+    return(y)
+  return(x)
+}
+
+Laplace<-function(x,delta){
+  y<-x+ExtDist::rLaplace(1,b=delta)
+  if(abs(y)<abs(x))
+    return(y)
+  alpha<-exp((x^2-y^2)/2)
+  z<-rbinom(1,1,alpha)
+  if(z)
+    return(y)
+  return(x)
+}
+
+simulate_sample<-function(n,delta=1,f=Uniform){
+  X<-0
+  for(i in 1:n)
+    X[i+1]<-f(X[i],delta)
+  return(X)
+}
+
+simulate_sample_burn<-function(n,delta=1,burn=n%/%10,step=10,f=g){
+  X<-simulate_sample(burn+step*n,delta,f)
+  X<-X[-1:-burn]
+  return(X[seq(1,length(X),step)])
+}
+
+burn_sample<-function(S,step,size){
+  S<-S[seq(1,length(S),step)]
+  return(head(S,size))
+}
+
+n=10^6
+#Delta=3^(-5:5)
+g=Uniform
+
+
+set.seed(49)
+steps=seq(5,100,5)
+steps=1:20
+S<-simulate_sample(n*max(steps),3,Uniform)
+#Acor<-acf(S)
+
+Sample<-lapply(steps,function(x)burn_sample(S,x,n))
+#Sample<-lapply(steps,function(x)simulate_sample_burn(n,3,1,x,Uniform))
+Alphas<-sapply(Sample,mean_alpha)
+#Acor<-lapply(1:length(Sample),function(i)acf(Sample[[i]]))
+#V<-sapply(Acor,function(x)sum(abs(x$acf)))
+plot(steps,Alphas,type='b')
+i<-which.min(Alphas)
+
+
+X<-simulate_sample_burn(n,delta=3,burn=1,step=steps[i])
+plot(density(X))
+ks.test(X,pnorm)
+
+g=Cauchy
+lambda=1
+X<-simulate_sample_burn(n,lambda,f=g)
+plot(density(X))
+ks.test(X,pnorm)
+
+g=Laplace
+lambda=1
+X<-simulate_sample_burn(n,lambda,f=g)
+plot(density(X))
+ks.test(X,pnorm)
+
