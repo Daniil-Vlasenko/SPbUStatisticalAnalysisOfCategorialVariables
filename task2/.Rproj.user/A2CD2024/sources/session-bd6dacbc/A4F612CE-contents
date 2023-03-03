@@ -44,11 +44,13 @@ library(readxl)
 
 ```{r}
 df<-read.csv('data_big.csv')
-df1<-df[,c('depressed.mood.1','craving.to.alcohol.1','anxiety.1','weakness.1', "hyperemia.1")]
+df
+df1<-df[,c('depressed.mood.1','craving.to.alcohol.1','anxiety.1','HR.1')]
 
 df1
 ```
 
+Используем имеющуюся в R функцию кластеризации.
 ```{r}
 library("tree")
 treeA <- tree(craving.to.alcohol.1 ~., df1)
@@ -58,7 +60,29 @@ plot(treeA); text(treeA, col=4) # почему работает через ";", 
 # что за дискриминантынй анализ?
 ```
 
+Построим таблицу классификации для данного метода:
 ```{r}
+library(dplyr)
+column.03333 <- c(df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 2) %>% nrow())
+column.08333 <- c(df1 %>% filter(HR.1 > 64.5, HR.1 < 74, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 > 64.5, HR.1 < 74, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 > 64.5, HR.1 < 74, craving.to.alcohol.1 == 2) %>% nrow())
+column.01667 <- c(df1 %>% filter(HR.1 < 81.5, HR.1 > 74, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 < 81.5, HR.1 > 74, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 < 81.5, HR.1 > 74, craving.to.alcohol.1 == 2) %>% nrow())
+column.11880 <- c(df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 2) %>% nrow())
+
+class.df <- data_frame(craving.to.alcohol.1 = 0:2, column.03333,  column.08333, column.01667, column.11880)
+class.df
+```
+
+
+```{r}
+# Это я написал вычисление информационного разнообразия и инф. выгрыша от объединения.
 information.1 <- function(v) {
   unique.v <- unique(v)
   information.v <- length(v) * log(length(v))
@@ -76,19 +100,76 @@ information.2 <- function(df) {
   return(information.df)
 }
 
-information.2(df1)
+information.gain.v <- function(v1, v2) {
+  information.gain.v1.v2 <- information.1(c(v1, v2)) - information.1(v1) - information.1(v2)
+  return(information.gain.v1.v2)
+}
 
-information.gain <- function(df1, df2) {
+information.gain.df <- function(df1, df2) {
   information.gain.df1.df2 <- information.2(rbind(df1, df2)) - information.2(df1) - information.2(df2)
   return(information.gain.df1.df2)
 }
 
-information.gain(df1[1:10,], df1[10:nrow(df1),])
+information.gain.v(c(1, 1), c(2, 2))
+information.gain.v(c(1, 2), c(1, 2))
 
 ```
 
+```{r}
+##  Тут я решил не переписывать метод классификации и использовал код лекции.
+I_inf <-function(X)
+{nn <-table(X); n <-sum(nn); n * log(n)- sum(nn * log(nn))}
+
+D_inf <-function(X, Y)I_inf(c(X, Y))- I_inf(X)- I_inf(Y)
+
+GinyDA. <- function(y, class, k1, k2) { 
+  # y независимая переменная, class,
+  # k1,k2 минимальные объемы подвыборок
+  ss <- sort(unique(y)); ss
+  ss. <- (ss[-1] + ss[-length(ss)])/2;
+  # определяем середины интервалов между наблюдениями
+  l <- lapply(ss., function(x)
+  { L1 <- class[y <= x]; L2 <- class[y > x];
+  if(length(L1) > k1&length(L2) > k2)
+  res <- c(D_inf(L1, L2), x)else res <- c(NA, NA) })
+  # считаем информационные выигрыши при размежевании данных
+  data.frame(na.omit(do.call("rbind", l)))
+}
+```
 
 
+```{r}
+GinyDA.(df1$depressed.mood.1, df1$craving.to.alcohol.1, 2, 2)
+GinyDA.(df1$anxiety.1, df1$craving.to.alcohol.1, 2, 2)
+GinyDA.(df1$HR.1, df1$craving.to.alcohol.1, 2, 2)
+df1 %>% filter(HR.1 < 64.5)
+```
+```{r}
+df2 <- df1 %>% filter(HR.1 > 64.5)
+GinyDA.(df2$depressed.mood.1, df2$craving.to.alcohol.1, 2, 2)
+GinyDA.(df2$anxiety.1, df2$craving.to.alcohol.1, 2, 2)
+GinyDA.(df2$HR.1, df2$craving.to.alcohol.1, 2, 2)
+df2 %>% filter(HR.1 > 81.5)
+```
+
+```{r}
+column.0 <- c(df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 2) %>% nrow())
+column.1 <- c(df1 %>% filter(HR.1 > 64.5, HR.1 < 76.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 > 64.5, HR.1 < 76.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 > 64.5, HR.1 < 76.5, craving.to.alcohol.1 == 2) %>% nrow())
+column.2 <- c(df1 %>% filter(HR.1 < 81.5, HR.1 > 76.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 < 81.5, HR.1 > 76.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 < 81.5, HR.1 > 76.5, craving.to.alcohol.1 == 2) %>% nrow())
+column.3 <- c(df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 2) %>% nrow())
+
+class.df.2 <- data_frame(craving.to.alcohol.1 = 0:2, column.0,  column.1, column.2, column.3)
+class.df.1
+class.df.2
+```
 
 
 
