@@ -1,0 +1,53 @@
+df<-read.csv('data_big.csv')
+
+X1<-df$depressed.mood.1
+X2<-df$polyuria.1
+X<-cbind(X1,X2)
+
+m<-table(X1,X2)
+
+m[1,1]<-length(which(((X[,1]==1)&(X[,2]==0))==TRUE))
+m[2,2]<-length(which(((X[,1]==2)&(X[,2]==1))==TRUE))
+m[1,2]<-length(which(((X[,1]==1)&(X[,2]==1))==TRUE))
+m[2,1]<-length(which(((X[,1]==2)&(X[,2]==0))==TRUE))
+
+a<-m[1,1]
+b<-m[1,2]
+c<-m[2,1]
+d<-m[2,2]
+
+count_chisq<-function(M){
+  m<-nrow(M)
+  n<-ncol(M)
+  n_row<-colSums(M)
+  n_col<-rowSums(M)
+  N<-sum(M)
+  S<-0
+  for(i in 1:m)
+    for(j in 1:n)
+      S<-S+(M[i,j]-n_col[i]*n_row[j]/N)^2/(n_col[i]*n_row[j]/N)
+  return(S)
+}
+ 
+count_L<-function(M){
+  m<-nrow(M)
+  n<-ncol(M)
+  n_row<-colSums(M)
+  n_col<-rowSums(M)
+  N<-sum(M)
+  S<-0
+  for(i in 1:m)
+    for(j in 1:n)
+      S<-S+M[i,j]*log(M[i,j]*N/(n_col[i]*n_row[j]))
+  return(2*S)
+} 
+chisq<-sum(m)*det(m)^2/((a+b)*(c+d)*(a+c)*(b+d))
+chisq_2<-count_chisq(m)
+p_chi<-1-pchisq(chisq,1)
+L<-count_L(m)
+p_chi<-1-pchisq(L,1)
+
+fisher.test(m)
+
+(b-c)^2/(b+c)
+MN<-2^(1-(b+c))*sum(choose(b+c,1:min(b,c)))

@@ -1,0 +1,4 @@
+"0","df<-read.csv('data_big.csv')"
+"0","df1<-df[,c('depressed.mood.1','craving.to.alcohol.1','anxiety.1','weakness.1', ""hyperemia.1"")]"
+"0",""
+"0","df1"

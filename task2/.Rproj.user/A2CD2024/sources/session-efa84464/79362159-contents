@@ -5,6 +5,7 @@ date: "2023-03-03"
 ---
 
 
+## Энтропия.
 ```{r}
 data <- matrix(c(6, 16, 12, 11), ncol=2)
 data
@@ -33,5 +34,25 @@ paste("J.y:", J.y)
 
 J <- 2 * I / (H.x + H.y) * 100
 paste("J:", J)
+```
+
+## Кластеризация.
+```{r}
+library(dplyr)
+library(readxl)
+```
+
+```{r}
+df<-read.csv('data_big.csv')
+df1<-df[,c('suspiciousness.1','irritability.1','headache.1','polyuria.1','sweating.1')]
+
+tree()
+```
+
+```{r}
+install.packages("tree")
+data("iris")
+ir.tr <- tree(Species ~., iris)
+ir.tr
 ```
 

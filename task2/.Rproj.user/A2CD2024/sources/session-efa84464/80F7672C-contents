@@ -1,0 +1,16 @@
+
+n=100
+p=1/10
+#set.seed(100)
+X<-rbinom(n,1,p)
+nu0<-length(X[X==0])
+nu1<-length(X[X==1])
+# nu0<-75
+# nu1<-100-nu0
+p_MLE<-mean(X)
+t_chi<-(nu0-n*(1-p))^2/(n*(1-p))+(nu1-n*p)^2/(n*p)
+t_likelihod<-2*(nu0*log(nu0/(n*(1-p)))+nu1*log(nu1/(n*p)))
+p_chi<-1-pchisq(t_chi,1)
+p_likelihod<-1-pchisq(t_likelihod,1)
+print(c(t_chi,t_likelihod))
+
