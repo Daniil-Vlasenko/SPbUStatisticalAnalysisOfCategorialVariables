@@ -1,2 +1,0 @@
-"0","df2 <- df1 %>% filter(HR.1 > 64.5)"
-"0","GinyDA.(df2$depressed.mood.1, df2$craving.to.alcohol.1, 2, 2)"

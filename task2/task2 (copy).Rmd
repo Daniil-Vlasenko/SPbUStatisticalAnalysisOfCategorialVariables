@@ -44,7 +44,7 @@ library(readxl)
 
 ```{r}
 df<-read.csv('data_big.csv')
-# df
+# head(df)
 df1<-df[,c('depressed.mood.1','craving.to.alcohol.1','anxiety.1','HR.1')]
 head(df1)
 ```
@@ -52,30 +52,30 @@ head(df1)
 Используем имеющуюся в R функцию кластеризации.
 ```{r}
 library("tree")
-treeA <- tree(depressed.mood.1 ~., df1)
+treeA <- tree(craving.to.alcohol.1 ~., df1)
 plot(treeA); text(treeA, col=4) # почему работает через ";", а на разных строках не работает?
 ```
 
 Построим таблицу классификации для данного метода:
 ```{r, warning=FALSE}
 library(dplyr)
+column.03333 <- c(df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 2) %>% nrow())
+column.08333 <- c(df1 %>% filter(HR.1 > 64.5, HR.1 < 74, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 > 64.5, HR.1 < 74, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 > 64.5, HR.1 < 74, craving.to.alcohol.1 == 2) %>% nrow())
+column.01667 <- c(df1 %>% filter(HR.1 < 81.5, HR.1 > 74, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 < 81.5, HR.1 > 74, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 < 81.5, HR.1 > 74, craving.to.alcohol.1 == 2) %>% nrow())
+column.11880 <- c(df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 2) %>% nrow())
 
-column.1 <- c(df %>% filter(depressed.mood.1 == 1 & craving.to.alcohol.1 < 1.5 & anxiety.1 > 0.5 & HR.1 > 66.5) %>% nrow(),
-              df %>% filter(depressed.mood.1 == 2 & craving.to.alcohol.1 < 1.5 & anxiety.1 > 0.5 & HR.1 > 66.5) %>% nrow())
-
-column.1.4 <- c(df %>% 
-                filter(depressed.mood.1 == 1 & 
-                         (craving.to.alcohol.1 > 1.5 | craving.to.alcohol.1 < 1.5 & 
-                            (anxiety.1 < 0.5 | anxiety.1 > 0.5 & HR.1 < 66.5))) %>% nrow(),
-                df %>% 
-                filter(depressed.mood.1 == 2 & 
-                         (craving.to.alcohol.1 > 1.5 | craving.to.alcohol.1 < 1.5 & 
-                            (anxiety.1 < 0.5 | anxiety.1 > 0.5 & HR.1 < 66.5))) %>% nrow())
-
-
-class.df.1 <- data_frame(depressed.mood.1 = 1:2, column.1,  column.1.4)
+class.df.1 <- data_frame(craving.to.alcohol.1 = 0:2, column.03333,  column.08333, column.01667, column.11880)
 class.df.1
 ```
+
 
 ```{r}
 # Это я написал вычисление информационного разнообразия и инф. выгрыша от объединения.
@@ -137,32 +137,39 @@ GinyDA. <- function(y, class, k1, k2) {
 ```
 
 ```{r}
-GinyDA.(df1$craving.to.alcohol.1, df1$depressed.mood.1, 2, 2)
-GinyDA.(df1$anxiety.1, df1$depressed.mood.1, 2, 2)
-GinyDA.(df1$HR.1, df1$depressed.mood.1, 2, 2)
-df2 <- df1 %>% filter(anxiety.1 < 1.5); df2
-df3 <- df1 %>% filter(anxiety.1 > 1.5); df3
+GinyDA.(df1$depressed.mood.1, df1$craving.to.alcohol.1, 2, 2)
+GinyDA.(df1$anxiety.1, df1$craving.to.alcohol.1, 2, 2)
+GinyDA.(df1$HR.1, df1$craving.to.alcohol.1, 2, 2)
+df1 %>% filter(HR.1 < 81.5)
+df1 %>% filter(HR.1 > 81.5)
 ```
 ```{r}
+df2 <- df1 %>% filter(HR.1 > 81.5)
 GinyDA.(df2$depressed.mood.1, df2$craving.to.alcohol.1, 2, 2)
 GinyDA.(df2$anxiety.1, df2$craving.to.alcohol.1, 2, 2)
 GinyDA.(df2$HR.1, df2$craving.to.alcohol.1, 2, 2)
-df4 <- df2 %>% filter(HR.1 < 64.5); df4
-df5 <- df2 %>% filter(HR.1 > 64.5); df5
+df2 %>% filter(HR.1 > 81.5)
 ```
 
 ```{r}
-column.1 <- c(df %>% filter(depressed.mood.1 == 1 & anxiety.1 < 1.5) %>% nrow(),
-              df %>% filter(depressed.mood.1 == 2 & anxiety.1 < 1.5) %>% nrow())
-column.2 <- c(df %>% filter(depressed.mood.1 == 1 & anxiety.1 > 1.5) %>% nrow(),
-              df %>% filter(depressed.mood.1 == 2 & anxiety.1 > 1.5) %>% nrow())
+column.0 <- c(df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 < 64.5, craving.to.alcohol.1 == 2) %>% nrow())
+column.1 <- c(df1 %>% filter(HR.1 > 64.5, HR.1 < 76.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 > 64.5, HR.1 < 76.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 > 64.5, HR.1 < 76.5, craving.to.alcohol.1 == 2) %>% nrow())
+column.2 <- c(df1 %>% filter(HR.1 < 81.5, HR.1 > 76.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 < 81.5, HR.1 > 76.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 < 81.5, HR.1 > 76.5, craving.to.alcohol.1 == 2) %>% nrow())
+column.3 <- c(df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 0) %>% nrow(),
+                  df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 1) %>% nrow(),
+                  df1 %>% filter(HR.1 > 81.5, craving.to.alcohol.1 == 2) %>% nrow())
 
-class.df.2 <- data_frame(depressed.mood.1 = 1:2, column.1,  column.2)
-
+class.df.2 <- data_frame(craving.to.alcohol.1 = 0:2, column.0,  column.1, column.2, column.3)
 class.df.1
 class.df.2
-df %>% nrow()
 ```
+
 
 
 
